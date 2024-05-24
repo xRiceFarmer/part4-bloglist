@@ -1,0 +1,9 @@
+POST http://localhost:3001/api/blogs
+Content-Type: application/json
+
+{
+    "title": "Kafka by the shore",
+    "author": "Murakami",
+    "url": "ISBN 0123",
+    "likes": 12
+}
