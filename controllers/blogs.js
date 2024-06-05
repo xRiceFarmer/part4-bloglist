@@ -1,15 +1,19 @@
 const blogsRouter = require("express").Router();
 const Blog = require("../models/blog");
+const middleware = require('../utils/middleware');
 
 blogsRouter.get("/", async (request, response) => {
-  const blogs = await Blog.find({}).populate("user", { username: 1, name: 1 });
+  const blogs = await Blog
+  .find({})
+  .populate("user", { username: 1, name: 1 });
   response.json(blogs);
 });
 
-blogsRouter.post("/", async (request, response) => {
+blogsRouter.post("/", middleware.userExtractor, async (request, response) => {
   const body = request.body;
   const user = request.user
   if (!user) {
+    console.log('error finding user')
     return response
       .status(400)
       .json({ error: "No users found in the database" });
@@ -26,16 +30,21 @@ blogsRouter.post("/", async (request, response) => {
   user.blogs = user.blogs.concat(savedBlog._id);
   await user.save();
 
-  response.status(201).json(savedBlog);
+  const populatedBlog = await Blog.findById(savedBlog._id).populate('user', { username: 1, name: 1 });
+  
+  response.status(201).json(populatedBlog);
 });
 
-blogsRouter.delete("/:id", async (request, response) => {
+blogsRouter.delete("/:id", middleware.userExtractor, async (request, response) => {
   const blog = await Blog.findById(request.params.id);
   if (!blog) {
     return response.status(404).end();
   }
   const user = request.user
-  if (blog.user.toString() !== user.id.toString()) {
+  if (!user || !blog.user){
+    return response.status(401).json({ error: 'only creator of the blog can delete it' })
+  }
+  if (blog.user.toString() !== user._id.toString()) {
     return response.status(401).json({ error: 'only creator of the blog can delete it' })
   } 
   await Blog.findByIdAndDelete(request.params.id);
