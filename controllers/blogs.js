@@ -25,6 +25,7 @@ blogsRouter.post("/", middleware.userExtractor, async (request, response) => {
     url: body.url,
     likes: body.likes || 0,
     user: user._id,
+    comment: []
   });
   const savedBlog = await blog.save();
   user.blogs = user.blogs.concat(savedBlog._id);
@@ -34,6 +35,17 @@ blogsRouter.post("/", middleware.userExtractor, async (request, response) => {
   
   response.status(201).json(populatedBlog);
 });
+
+blogsRouter.post("/:id/comments", async (request, response) => {
+  const blog = await Blog.findById(request.params.id);
+  const comment = request.body.comment
+  if (!blog || !comment) {
+    return response.status(400).json({ error: 'Invalid blog ID or comment' });
+  }
+  blog.comments = blog.comments.concat(comment)
+  await blog.save()
+  response.status(201).json(blog)
+})
 
 blogsRouter.delete("/:id", middleware.userExtractor, async (request, response) => {
   const blog = await Blog.findById(request.params.id);
