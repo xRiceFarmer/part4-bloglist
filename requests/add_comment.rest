@@ -1,0 +1,6 @@
+POST http://localhost:3001/api/blogs/665eab090e63067b85d35a34/comments
+Content-Type: application/json
+
+{
+    "content": "this blog sucks"
+}
